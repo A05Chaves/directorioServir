@@ -20,9 +20,10 @@ from app_directorio import views
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', views.login_view, name='login'),
-    path('home', views.home, name='home'),
+    #path('admin/', admin.site.urls),
+    path('', views.home, name='home'),
+    path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-
+    path('directorio/<slug:edificio>/', views.home, name='directorio'),
+    path('eliminar-edificio/<int:edificio_id>/', views.eliminar_edificio, name='eliminar_edificio'),
 ]

@@ -6,7 +6,7 @@
 <div class="container mt-5" style="max-width: 400px;">
     <h2 class="text-center">Iniciar Sesión</h2>
     {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
+    <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
     <form method="post" class="p-3 border rounded shadow-sm" enctype="application/x-www-form-urlencoded">
         {% csrf_token %}
