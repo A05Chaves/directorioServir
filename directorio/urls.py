@@ -24,6 +24,10 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('directorio/<slug:edificio>/', views.home, name='directorio'),
+   # path('directorio/<slug:edificio>/', views.home, name='directorio'),
+   # path('eliminar-edificio/<int:edificio_id>/', views.eliminar_edificio, name='eliminar_edificio'),
+    
+    path('directorio/<int:edificio_id>/', views.directorio_edificio, name='directorio_edificio'),
     path('eliminar-edificio/<int:edificio_id>/', views.eliminar_edificio, name='eliminar_edificio'),
+
 ]

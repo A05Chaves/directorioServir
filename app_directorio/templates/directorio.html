@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Directorio - {{ edificio.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Directorio del Edificio: {{ edificio.nombre }}</h2>
+    <p>Aquí se puede mostrar información relevante del edificio.</p>
+
+    <!-- Aquí puedes agregar más detalles del edificio -->
+    <div class="alert alert-info">
+        Información detallada del edificio: {{ edificio.nombre }}
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-secondary">Volver</a>
+</div>
+{% endblock %}
