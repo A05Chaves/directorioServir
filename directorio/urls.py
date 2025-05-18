@@ -20,14 +20,15 @@ from app_directorio import views
 
 
 urlpatterns = [
-    #path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('', views.home, name='home'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-   # path('directorio/<slug:edificio>/', views.home, name='directorio'),
-   # path('eliminar-edificio/<int:edificio_id>/', views.eliminar_edificio, name='eliminar_edificio'),
-    
+    path('directorio/<int:edificio_id>/', views.directorio_edificio, name='directorio_edificio'),
+    path('directorio/<int:edificio_id>/editar/<int:residente_id>/', views.editar_residente, name='editar_residente'),
+    path('directorio/<int:edificio_id>/agregar/', views.agregar_residente, name='agregar_residente'),
+    path('directorio/<int:edificio_id>/eliminar/<int:residente_id>/', views.eliminar_residente, name='eliminar_residente'),
     path('directorio/<int:edificio_id>/', views.directorio_edificio, name='directorio_edificio'),
     path('eliminar-edificio/<int:edificio_id>/', views.eliminar_edificio, name='eliminar_edificio'),
-
+    path('directorio/<int:edificio_id>/filtrar/', views.filtrar_residentes, name='filtrar_residentes'),
 ]
