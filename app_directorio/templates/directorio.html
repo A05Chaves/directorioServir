@@ -14,23 +14,40 @@
     </div>
     {% endif %}
 
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form_excel.as_p }}
-        <button type="submit" name="carga_excel" class="btn btn-info">Cargar Excel</button>
-    </form>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- Formulario de Cargar Excel -->
+        <form method="POST" enctype="multipart/form-data"
+            class="d-flex align-items-center p-2 border rounded shadow-sm bg-light">
+            {% csrf_token %}
+            <div class="me-2">
+                {{ form_excel.as_p }}
+            </div>
 
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{% url 'agregar_residente' edificio.id %}" class="btn btn-success">Agregar Residente</a>
+            <!-- Botón para descargar plantilla -->
+            <a href="static/plantillas/Plantilla_edificio.xlsx" download class="btn btn-outline-light btn-sm">
+                <i class="fas fa-file-excel me-1"></i> Descargar Plantilla
+            </a>
+        </form>
     </div>
 
     <div class="container mt-5">
 
 
         <!-- Filtro de residentes -->
-        <div class="mb-3">
-            <input type="text" id="filtro" placeholder="Buscar por nombre, documento o apto" class="form-control"
-                aria-label="Buscar">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <!-- Campo de Búsqueda -->
+            <div class="input-group w-75 shadow-sm">
+                <span class="input-group-text bg-info text-white">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="filtro" placeholder="Buscar por nombre, documento o apto" class="form-control"
+                    aria-label="Buscar">
+            </div>
+
+            <!-- Botón Agregar Residente -->
+            <a href="{% url 'agregar_residente' edificio.id %}" class="btn btn-success btn-sm ms-2">
+                <i class="fas fa-plus"></i> Agregar Residente
+            </a>
         </div>
 
         <table class="table table-bordered" id="tabla-residentes">
@@ -61,25 +78,27 @@
                     {% if request.user.is_superuser %}
                     <td class="text-center">
                         <div class="btn-group" role="group" aria-label="Acciones">
-                            <!-- Botón Editar con ícono -->
+                            <!-- Botón Editar con nuevo diseño -->
                             <a href="{% url 'editar_residente' edificio.id residente.id %}"
-                                class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center"
+                                class="btn btn-outline-success btn-sm rounded-pill d-flex align-items-center px-3 me-1 shadow-sm"
                                 title="Editar">
-                                <i class="fas fa-edit me-1"></i> Editar
+                                <i class="fas fa-pen me-2"></i>
                             </a>
 
-                            <!-- Botón Eliminar con ícono y confirmación -->
+                            <!-- Botón Eliminar con nuevo diseño -->
                             <form method="POST" action="{% url 'eliminar_residente' edificio.id residente.id %}"
                                 style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit"
-                                    class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center"
+                                    class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center px-3 shadow-sm"
                                     onclick="return confirm('¿Estás seguro de eliminar este registro?');"
                                     title="Eliminar">
-                                    <i class="fas fa-trash-alt me-1"></i> Eliminar
+                                    <i class="fas fa-trash me-2"></i>
                                 </button>
                             </form>
                         </div>
+
+
                     </td>
 
 

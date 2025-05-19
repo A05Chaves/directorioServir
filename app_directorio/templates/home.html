@@ -9,9 +9,22 @@
     <!-- Formulario para agregar un edificio -->
     <form method="POST" class="mb-4">
         {% csrf_token %}
-        <input type="text" name="nombre" placeholder="Nombre del edificio" class="form-control mb-2" required>
-        <button type="submit" name="agregar" class="btn btn-success">Agregar Edificio</button>
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+                <h5 class="card-title text-center mb-3">Agregar Nuevo Edificio</h5>
+                <div class="mb-3">
+                    <input type="text" name="nombre" id="nombre" placeholder="Ej: Torre Central"
+                        class="form-control form-control-sm" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" name="agregar" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> Agregar Edificio
+                    </button>
+                </div>
+            </div>
+        </div>
     </form>
+
 
     <!-- Lista de edificios con botón de eliminación solo para superusuarios -->
     <div class="row justify-content-center">

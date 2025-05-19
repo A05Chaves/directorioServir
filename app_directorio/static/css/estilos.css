@@ -1,0 +1,63 @@
+/* Card personalizada */
+.card {
+    border-radius: 12px;
+    margin: 20px auto;
+    max-width: 400px;
+}
+
+.card-body {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+}
+
+/* Título del formulario */
+.card-title {
+    font-weight: bold;
+    color: #343a40;
+}
+
+/* Botón de descarga */
+.btn-outline-info {
+    color: #17a2b8;
+    border-color: #17a2b8;
+    background: linear-gradient(135deg, #e9f7fc, #d1ecf1);
+    transition: all 0.3s ease;
+}
+
+.btn-outline-info:hover {
+    color: #fff;
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+/* Botón agregar */
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    transition: background-color 0.3s ease;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+/* Placeholder visible */
+.placeholder-visible::placeholder {
+    color: #6c757d;
+    font-weight: bold;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.placeholder-visible:focus::placeholder {
+    color: #495057;
+    opacity: 1;
+}
+
+/* Botones con margen en íconos */
+.btn i {
+    margin-right: 5px;
+}
+
+/*ESTILOS ARCHIVO BASE

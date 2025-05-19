@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 
@@ -7,15 +8,88 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+    <link href="{% static 'css/estilos.css' %}" rel="stylesheet">
+</head>
 
+<style>
+    /* Ajuste del cuerpo para ocupar toda la pantalla */
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Contenedor principal para ocupar toda la pantalla */
+    .main-content {
+        min-height: calc(100vh - 80px);
+        /* Altura total menos el tamaño del footer */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Navbar personalizado */
+    .navbar-custom {
+        background: linear-gradient(135deg, #343a40, #495057);
+    }
+
+    .navbar-brand,
+    .nav-link {
+        color: #f8f9fa !important;
+        font-weight: bold;
+        transition: color 0.3s ease;
+    }
+
+    .navbar-brand:hover,
+    .nav-link:hover {
+        color: #ffdd57 !important;
+    }
+
+    /* Botón de cerrar sesión */
+    .btn-logout {
+        color: #f8f9fa;
+        border: 1px solid #f8f9fa;
+        border-radius: 20px;
+        padding: 5px 15px;
+        margin-left: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-logout:hover {
+        background-color: #f8f9fa;
+        color: #343a40;
+    }
+
+    /* Footer fijo en la parte inferior */
+    footer {
+        background-color: #343a40;
+        color: #f8f9fa;
+        width: 100%;
+        padding: 10px 0;
+        position: relative;
+        bottom: 0;
+        left: 0;
+    }
+
+    footer a {
+        color: #ffdd57;
+        text-decoration: none;
+    }
+
+    footer a:hover {
+        color: #ffc107;
+        text-decoration: underline;
+    }
+</style>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <!-- Navbar Mejorado -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">Directorio</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -28,20 +102,62 @@
                         <a class="nav-link" href="{% url 'home' %}">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'logout' %}">Cerrar sesión</a>
+                        <a class="nav-link btn btn-logout" href="{% url 'logout' %}">Cerrar sesión</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        {% block content %}
-        {% endblock %}
+    <!-- Contenido Principal -->
+    <div class="main-content">
+        <div class="container mt-4">
+            {% block content %}
+            {% endblock %}
+        </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 mt-4">
+        <div class="container">
+            <p id="footer-text" class="mb-0"></p>
+            {% if request.user.is_authenticated %}
+            <p class="mb-0">Usuario conectado: {{ request.user.username }}</p>
+            {% else %}
+            <p class="mb-0">Usuario no autenticado</p>
+            {% endif %}
+            <p class="mb-0">
+                <a href="https://github.com" target="_blank">GitHub</a> |
+                <a href="https://www.linkedin.com" target="_blank">LinkedIn</a> |
+                <a href="mailto:info@directorio.com">Contáctenos</a>
+            </p>
+        </div>
+    </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script para mostrar fecha y hora -->
+    <script>
+        function actualizarFechaHora() {
+            const ahora = new Date();
+            const opciones = {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            const formatoFechaHora = new Intl.DateTimeFormat('es-CO', opciones).format(ahora);
+            document.getElementById('footer-text').textContent = `Fecha y hora: ${formatoFechaHora}`;
+        }
+
+        // Actualiza la fecha y hora cada segundo
+        setInterval(actualizarFechaHora, 1000);
+    </script>
 </body>
 
 </html>
