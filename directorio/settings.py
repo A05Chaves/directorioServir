@@ -142,3 +142,4 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
+ADB_PATH = r"C:\adb\platform-tools\adb.exe"

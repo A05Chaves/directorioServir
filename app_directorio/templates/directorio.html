@@ -22,8 +22,6 @@
             <div class="me-2">
                 {{ form_excel.as_p }}
             </div>
-
-            <!-- Botón para descargar plantilla -->
             <a href="static/plantillas/Plantilla_edificio.xlsx" download class="btn btn-outline-light btn-sm">
                 <i class="fas fa-file-excel me-1"></i> Descargar Plantilla
             </a>
@@ -31,8 +29,6 @@
     </div>
 
     <div class="container mt-5">
-
-
         <!-- Filtro de residentes -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <!-- Campo de Búsqueda -->
@@ -72,20 +68,43 @@
                     <td>{{ residente.nombre_apellido }}</td>
                     <td>{{ residente.documento }}</td>
                     <td>{{ residente.parentesco }}</td>
-                    <td>{{ residente.celular1 }}</td>
-                    <td>{{ residente.celular2 }}</td>
+                    <td>
+                        {{ residente.celular1 }}
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 ms-1"
+                            onclick="llamar('{{ residente.celular1 }}')" title="Llamar">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 ms-1" onclick="colgar()"
+                            title="Colgar">
+                            <i class="fas fa-phone-slash"></i>
+                        </button>
+                    </td>
+
+                    <td>
+                        {% if residente.celular2 %}
+                        {{ residente.celular2 }}
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 ms-1"
+                            onclick="llamar('{{ residente.celular2 }}')" title="Llamar">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 ms-1" onclick="colgar()"
+                            title="Colgar">
+                            <i class="fas fa-phone-slash"></i>
+                        </button>
+                        {% else %}
+                        No registrado
+                        {% endif %}
+                    </td>
+
                     <td>{{ residente.observacion }}</td>
                     {% if request.user.is_superuser %}
                     <td class="text-center">
                         <div class="btn-group" role="group" aria-label="Acciones">
-                            <!-- Botón Editar con nuevo diseño -->
                             <a href="{% url 'editar_residente' edificio.id residente.id %}"
                                 class="btn btn-outline-success btn-sm rounded-pill d-flex align-items-center px-3 me-1 shadow-sm"
                                 title="Editar">
                                 <i class="fas fa-pen me-2"></i>
                             </a>
-
-                            <!-- Botón Eliminar con nuevo diseño -->
                             <form method="POST" action="{% url 'eliminar_residente' edificio.id residente.id %}"
                                 style="display:inline;">
                                 {% csrf_token %}
@@ -97,11 +116,7 @@
                                 </button>
                             </form>
                         </div>
-
-
                     </td>
-
-
                     {% endif %}
                 </tr>
                 {% empty %}
@@ -113,46 +128,18 @@
         </table>
     </div>
 
+    <!-- Script para realizar la llamada usando AJAX -->
     <script>
-        // Buscar residentes en tiempo real
-        document.getElementById('filtro').addEventListener('input', function () {
-            const filtro = this.value;
-            const url = "{% url 'filtrar_residentes' edificio.id %}?filtro=" + encodeURIComponent(filtro);
-
-            fetch(url)
+        function llamar(numero) {
+            fetch(`/llamar/{{ edificio.id }}/${numero}/`)
                 .then(response => response.json())
                 .then(data => {
-                    const tablaCuerpo = document.getElementById('tabla-cuerpo');
-                    tablaCuerpo.innerHTML = '';
-
-                    if (data.resultados.length > 0) {
-                        data.resultados.forEach(residente => {
-                            const fila = `
-                            <tr>
-                                <td>${residente.apto}</td>
-                                <td>${residente.nombre_apellido}</td>
-                                <td>${residente.documento}</td>
-                                <td>${residente.parentesco}</td>
-                                <td>${residente.celular1}</td>
-                                <td>${residente.celular2}</td>
-                                <td>${residente.observacion}</td>
-                                {% if request.user.is_superuser %}
-                                <td>
-                                    <a href="#" class="btn btn-warning btn-sm">Editar</a>
-                                    <button class="btn btn-danger btn-sm">Eliminar</button>
-                                </td>
-                                {% endif %}
-                            </tr>
-                        `;
-                            tablaCuerpo.insertAdjacentHTML('beforeend', fila);
-                        });
-                    } else {
-                        tablaCuerpo.innerHTML = '<tr><td colspan="8">No hay residentes registrados.</td></tr>';
-                    }
+                    alert(data.message);
+                })
+                .catch(() => {
+                    alert('Error al realizar la llamada.');
                 });
-        });
+        }
     </script>
-
-
 </div>
 {% endblock %}

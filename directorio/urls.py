@@ -31,4 +31,6 @@ urlpatterns = [
     path('directorio/<int:edificio_id>/', views.directorio_edificio, name='directorio_edificio'),
     path('eliminar-edificio/<int:edificio_id>/', views.eliminar_edificio, name='eliminar_edificio'),
     path('directorio/<int:edificio_id>/filtrar/', views.filtrar_residentes, name='filtrar_residentes'),
+    path('llamar/<int:edificio_id>/<str:telefono>/', views.realizar_llamada, name='realizar_llamada'),
+    path('colgar/<int:edificio_id>/', views.colgar_llamada, name='colgar_llamada'),
 ]

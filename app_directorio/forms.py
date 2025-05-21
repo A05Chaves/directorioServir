@@ -4,8 +4,9 @@ from .models import Directorio
 class DirectorioForm(forms.ModelForm):
     class Meta:
         model = Directorio
-        fields = ['nombre_apellido', 'documento', 'parentesco', 'celular1', 'celular2', 'observacion']
+        fields = ['apto', 'nombre_apellido', 'documento', 'parentesco', 'celular1', 'celular2', 'observacion']
         widgets = {
+            'apto':forms.TextInput( attrs={'class': 'form-control'}),
             'nombre_apellido': forms.TextInput(attrs={'class': 'form-control'}),
             'documento': forms.TextInput(attrs={'class': 'form-control'}),
             'parentesco': forms.TextInput(attrs={'class': 'form-control'}),

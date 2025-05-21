@@ -60,4 +60,17 @@
     margin-right: 5px;
 }
 
-/*ESTILOS ARCHIVO BASE
+/*ESTILOS BOTON LLAMAR*/
+
+.btn-outline-primary,.btn-outline-danger {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+}
+
+.btn-outline-primary:hover,.btn-outline-danger:hover {
+    background-color: #e9ecef;
+}
+
+.fas {
+    margin-right: 2px;
+}

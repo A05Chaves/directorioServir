@@ -9,6 +9,9 @@ from io import BytesIO
 from django.db import models
 from django.http import JsonResponse
 from django.db.models import Q
+import os
+import subprocess
+from django.conf import settings
 
 @login_required
 def home(request):
@@ -216,3 +219,56 @@ def logout_view(request):
     logout(request)
     #messages.success(request, 'Has cerrado sesión correctamente.')
     return redirect('login')
+
+# Función para realizar la llamada usando ADB
+#def llamar_telefono(numero):
+ #   comando = f'adb shell am start -a android.intent.action.CALL -d tel:{numero}'
+  #  resultado = os.system(comando)
+   # return resultado == 0
+
+# METODO PARA REALIZAR LLAMADAS
+#def llamar_telefono(numero):
+    #comando = f'adb shell am start -a android.intent.action.CALL -d tel:{numero}' no funciono
+    #adb_path = r'C:\adb\platform-tools\adb.exe'  # Usa tu ruta real aquí funcina local
+    #comando = f'"{adb_path}" shell am start -a android.intent.action.CALL -d tel:{numero}' funciona local
+
+   
+
+
+def llamar_telefono(numero):
+    adb_path = getattr(settings, "ADB_PATH", "adb")
+    comando = f'"{adb_path}" shell am start -a android.intent.action.CALL -d tel:{numero}'
+    ...
+
+
+
+    try:
+        resultado = subprocess.run(comando, shell=True, capture_output=True, text=True)
+        print("STDOUT:", resultado.stdout)
+        print("STDERR:", resultado.stderr)
+        return resultado.returncode == 0
+    except Exception as e:
+        print("ERROR EJECUTANDO ADB:", e)
+        return False
+
+# Función para colgar la llamada usando ADB
+def colgar_telefono():
+    comando = "adb shell input keyevent KEYCODE_ENDCALL"
+    resultado = os.system(comando)
+    return resultado == 0
+
+# Vista para realizar la llamada
+@login_required
+def realizar_llamada(request, edificio_id, telefono):
+    if llamar_telefono(telefono):
+        return JsonResponse({'status': 'success', 'message': f"Llamando al número {telefono}..."})
+    else:
+        return JsonResponse({'status': 'error', 'message': "Error al realizar la llamada."})
+
+# Vista para colgar la llamada
+@login_required
+def colgar_llamada(request, edificio_id):
+    if colgar_telefono():
+        return JsonResponse({'status': 'success', 'message': "Llamada finalizada."})
+    else:
+        return JsonResponse({'status': 'error', 'message': "Error al colgar la llamada."})
