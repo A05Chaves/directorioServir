@@ -143,5 +143,32 @@
                 });
         }
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('filtro');
+            const tabla = document.getElementById('tabla-cuerpo');
+
+            input.addEventListener('keyup', function () {
+                const filtro = input.value.toLowerCase();
+                const filas = tabla.getElementsByTagName('tr');
+
+                for (let i = 0; i < filas.length; i++) {
+                    const celdas = filas[i].getElementsByTagName('td');
+                    let mostrar = false;
+
+                    for (let j = 0; j < celdas.length; j++) {
+                        const texto = celdas[j].textContent.toLowerCase();
+                        if (texto.includes(filtro)) {
+                            mostrar = true;
+                            break;
+                        }
+                    }
+
+                    filas[i].style.display = mostrar ? '' : 'none';
+                }
+            });
+        });
+    </script>
+
 </div>
 {% endblock %}
