@@ -20,7 +20,6 @@ class DirectorioForm(forms.ModelForm):
 
 # CARGA EL ARCHIVO EN FORMATO EXCEL
 
-
 class CargaExcelForm(forms.Form):
     archivo_excel = forms.FileField(
         label='Subir archivo Excel',
