@@ -13,24 +13,41 @@ import os
 import subprocess
 from django.conf import settings
 
+
 @login_required
 def home(request):
     edificios = Edificio.objects.all()
 
-    # Agregar un nuevo edificio
     if request.method == 'POST' and 'agregar' in request.POST:
-        nuevo_edificio = request.POST.get('nombre').strip()
+
+        if not request.user.is_superuser:
+            messages.error(
+                request, "No tienes permisos para agregar edificios.")
+            return redirect('home')
+
+        nuevo_edificio = request.POST.get('nombre', '').strip().upper()
+
         if nuevo_edificio:
             if not Edificio.objects.filter(nombre=nuevo_edificio).exists():
                 Edificio.objects.create(nombre=nuevo_edificio)
-                messages.success(request, f'Edificio "{nuevo_edificio}" agregado correctamente.')
+                messages.success(
+                    request,
+                    f'Edificio "{nuevo_edificio}" agregado correctamente.'
+                )
             else:
-                messages.error(request, f'El edificio "{nuevo_edificio}" ya existe.')
+                messages.error(
+                    request,
+                    f'El edificio "{nuevo_edificio}" ya existe.'
+                )
+        else:
+            messages.error(request, "Debes ingresar un nombre válido.")
+
         return redirect('home')
 
     return render(request, 'home.html', {'edificios': edificios})
 
 # AJUSTE NUEVO 17 DE MAYO
+
 
 @login_required
 def directorio_edificio(request, edificio_id):
@@ -43,7 +60,8 @@ def directorio_edificio(request, edificio_id):
     directorio = Directorio.objects.filter(edificio=edificio)
     if filtro:
         directorio = directorio.filter(
-            models.Q(nombre_apellido__icontains=filtro) | models.Q(documento__icontains=filtro)
+            models.Q(nombre_apellido__icontains=filtro) | models.Q(
+                documento__icontains=filtro)
         )
 
     if request.method == 'POST':
@@ -54,22 +72,26 @@ def directorio_edificio(request, edificio_id):
                 try:
                     # Verificar el tipo de archivo (Excel)
                     if not archivo.name.endswith(('.xls', '.xlsx')):
-                        messages.error(request, 'Formato de archivo no soportado. Cargue un archivo Excel (.xls o .xlsx).')
+                        messages.error(
+                            request, 'Formato de archivo no soportado. Cargue un archivo Excel (.xls o .xlsx).')
                         return redirect('directorio_edificio', edificio_id=edificio.id)
 
                     # Leer el archivo Excel y reemplazar NaN con cadenas vacías
                     df = pd.read_excel(BytesIO(archivo.read())).fillna('')
 
                     # Convertir los números de celular a cadenas para evitar problemas de formato
-                    df['CELULAR 1'] = df['CELULAR 1'].astype(str).str.replace(r'\.0$', '', regex=True)
-                    df['CELULAR 2'] = df['CELULAR 2'].astype(str).str.replace(r'\.0$', '', regex=True)
+                    df['CELULAR 1'] = df['CELULAR 1'].astype(
+                        str).str.replace(r'\.0$', '', regex=True)
+                    df['CELULAR 2'] = df['CELULAR 2'].astype(
+                        str).str.replace(r'\.0$', '', regex=True)
 
                     # Validación de columnas
                     columnas_requeridas = [
                         'APTO', 'NOMBRE Y APELLIDO', 'DOCUMENTO', 'PARENTESCO', 'CELULAR 1', 'CELULAR 2', 'OBSERVACION'
                     ]
                     if not all(col in df.columns for col in columnas_requeridas):
-                        messages.error(request, 'El archivo Excel no contiene las columnas requeridas.')
+                        messages.error(
+                            request, 'El archivo Excel no contiene las columnas requeridas.')
                         return redirect('directorio_edificio', edificio_id=edificio.id)
 
                     # Guardar cada fila en la base de datos
@@ -86,9 +108,11 @@ def directorio_edificio(request, edificio_id):
                                 'observacion': row['OBSERVACION'],
                             }
                         )
-                    messages.success(request, 'Directorio cargado desde Excel correctamente.')
+                    messages.success(
+                        request, 'Directorio cargado desde Excel correctamente.')
                 except Exception as e:
-                    messages.error(request, f'Error al procesar el archivo: {str(e)}')
+                    messages.error(
+                        request, f'Error al procesar el archivo: {str(e)}')
                 return redirect('directorio_edificio', edificio_id=edificio.id)
 
         else:
@@ -112,6 +136,7 @@ def directorio_edificio(request, edificio_id):
     }
     return render(request, 'directorio.html', context)
 
+
 @login_required
 def filtrar_residentes(request, edificio_id):
     filtro = request.GET.get('filtro', '')
@@ -127,7 +152,8 @@ def filtrar_residentes(request, edificio_id):
         )
 
     # Convertir los resultados a una lista de diccionarios
-    resultados = list(directorio.values('apto', 'nombre_apellido', 'documento', 'parentesco', 'celular1', 'celular2', 'observacion'))
+    resultados = list(directorio.values('apto', 'nombre_apellido',
+                      'documento', 'parentesco', 'celular1', 'celular2', 'observacion'))
     return JsonResponse({'resultados': resultados})
 
 
@@ -152,6 +178,7 @@ def editar_residente(request, edificio_id, residente_id):
     }
     return render(request, 'editar_residente.html', context)
 
+
 @login_required
 def agregar_residente(request, edificio_id):
     edificio = get_object_or_404(Edificio, id=edificio_id)
@@ -173,6 +200,7 @@ def agregar_residente(request, edificio_id):
     }
     return render(request, 'agregar_residente.html', context)
 
+
 @login_required
 def eliminar_residente(request, edificio_id, residente_id):
     edificio = get_object_or_404(Edificio, id=edificio_id)
@@ -185,7 +213,6 @@ def eliminar_residente(request, edificio_id, residente_id):
     return redirect('directorio_edificio', edificio_id=edificio.id)
 
 
-
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def eliminar_edificio(request, edificio_id):
@@ -193,16 +220,18 @@ def eliminar_edificio(request, edificio_id):
         try:
             edificio = Edificio.objects.get(id=edificio_id)
             edificio.delete()
-            messages.success(request, f'Edificio "{edificio.nombre}" eliminado correctamente.')
+            messages.success(
+                request, f'Edificio "{edificio.nombre}" eliminado correctamente.')
         except Edificio.DoesNotExist:
             messages.error(request, 'El edificio no existe.')
         return redirect('home')
     return redirect('home')
 
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('home')
-        
+
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -215,24 +244,22 @@ def login_view(request):
             messages.error(request, 'Usuario o contraseña incorrectos.')
     return render(request, "login.html")
 
+
 def logout_view(request):
     logout(request)
-    #messages.success(request, 'Has cerrado sesión correctamente.')
     return redirect('login')
 
 # Función para realizar la llamada usando ADB
-#def llamar_telefono(numero):
+# def llamar_telefono(numero):
  #   comando = f'adb shell am start -a android.intent.action.CALL -d tel:{numero}'
   #  resultado = os.system(comando)
    # return resultado == 0
 
 # METODO PARA REALIZAR LLAMADAS
-#def llamar_telefono(numero):
-    #comando = f'adb shell am start -a android.intent.action.CALL -d tel:{numero}' no funciono
-    #adb_path = r'C:\adb\platform-tools\adb.exe'  # Usa tu ruta real aquí funcina local
-    #comando = f'"{adb_path}" shell am start -a android.intent.action.CALL -d tel:{numero}' funciona local
-
-   
+# def llamar_telefono(numero):
+    # comando = f'adb shell am start -a android.intent.action.CALL -d tel:{numero}' no funciono
+    # adb_path = r'C:\adb\platform-tools\adb.exe'  # Usa tu ruta real aquí funcina local
+    # comando = f'"{adb_path}" shell am start -a android.intent.action.CALL -d tel:{numero}' funciona local
 
 
 def llamar_telefono(numero):
@@ -240,10 +267,9 @@ def llamar_telefono(numero):
     comando = f'"{adb_path}" shell am start -a android.intent.action.CALL -d tel:{numero}'
     ...
 
-
-
     try:
-        resultado = subprocess.run(comando, shell=True, capture_output=True, text=True)
+        resultado = subprocess.run(
+            comando, shell=True, capture_output=True, text=True)
         print("STDOUT:", resultado.stdout)
         print("STDERR:", resultado.stderr)
         return resultado.returncode == 0
@@ -252,12 +278,16 @@ def llamar_telefono(numero):
         return False
 
 # Función para colgar la llamada usando ADB
+
+
 def colgar_telefono():
     comando = "adb shell input keyevent KEYCODE_ENDCALL"
     resultado = os.system(comando)
     return resultado == 0
 
 # Vista para realizar la llamada
+
+
 @login_required
 def realizar_llamada(request, edificio_id, telefono):
     if llamar_telefono(telefono):
@@ -266,6 +296,8 @@ def realizar_llamada(request, edificio_id, telefono):
         return JsonResponse({'status': 'error', 'message': "Error al realizar la llamada."})
 
 # Vista para colgar la llamada
+
+
 @login_required
 def colgar_llamada(request, edificio_id):
     if colgar_telefono():

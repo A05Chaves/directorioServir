@@ -1,24 +1,36 @@
 {% extends 'base.html' %}
 
-{% block title %}Agregar Residente - {{ edificio.nombre }}{% endblock %}
+{% block title %}Agregar Registro - {{ edificio.nombre }}{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Agregar Residente al Edificio: {{ edificio.nombre }}</h2>
+<div class="container mt-4">
+
+    <h2>Agregar Residente en el Edificio: {{ edificio.nombre }}</h2>
 
     <form method="POST">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Guardar Residente</button>
-        <a href="{% url 'directorio_edificio' edificio.id %}" class="btn btn-secondary">Cancelar</a>
+
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ field.label }}:</label>
+                {{ field }}
+
+                {% if field.errors %}
+                    <div class="text-danger small">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">
+            Guardar Registro
+        </button>
+
+        <a href="{% url 'directorio_edificio' edificio.id %}" class="btn btn-secondary">
+            Cancelar
+        </a>
     </form>
 
-    {% if messages %}
-    <div class="mt-3">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

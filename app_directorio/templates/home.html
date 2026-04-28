@@ -38,7 +38,12 @@
                 {% if request.user.is_superuser %}
                 <form method="POST" action="{% url 'eliminar_edificio' edificio.id %}" class="ms-2">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                    <button 
+                        type="submit" 
+                        class="btn btn-danger"
+                        onclick="return confirm('¿Seguro que deseas eliminar este edificio?')">
+                        Eliminar
+                    </button>
                 </form>
                 {% endif %}
             </div>
