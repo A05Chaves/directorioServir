@@ -12,6 +12,8 @@ from django.db.models import Q
 import os
 import subprocess
 from django.conf import settings
+import pandas as pd
+from django.http import HttpResponse
 
 
 @login_required
@@ -53,88 +55,119 @@ def home(request):
 def directorio_edificio(request, edificio_id):
     edificio = get_object_or_404(Edificio, id=edificio_id)
 
-    # Captura del filtro desde el formulario
     filtro = request.GET.get('filtro', '')
 
-    # Filtrado de residentes por nombre o documento
     directorio = Directorio.objects.filter(edificio=edificio)
+
     if filtro:
         directorio = directorio.filter(
-            models.Q(nombre_apellido__icontains=filtro) | models.Q(
-                documento__icontains=filtro)
+            models.Q(nombre__icontains=filtro) |
+            models.Q(cedula__icontains=filtro) |
+            models.Q(apto__icontains=filtro) |
+            models.Q(telefono__icontains=filtro) |
+            models.Q(telefono2__icontains=filtro) |
+            models.Q(placa__icontains=filtro)
         )
 
-    if request.method == 'POST':
-        if 'carga_excel' in request.POST:
-            form_excel = CargaExcelForm(request.POST, request.FILES)
-            if form_excel.is_valid():
-                archivo = request.FILES['archivo_excel']
-                try:
-                    # Verificar el tipo de archivo (Excel)
-                    if not archivo.name.endswith(('.xls', '.xlsx')):
-                        messages.error(
-                            request, 'Formato de archivo no soportado. Cargue un archivo Excel (.xls o .xlsx).')
-                        return redirect('directorio_edificio', edificio_id=edificio.id)
-
-                    # Leer el archivo Excel y reemplazar NaN con cadenas vacías
-                    df = pd.read_excel(BytesIO(archivo.read())).fillna('')
-
-                    # Convertir los números de celular a cadenas para evitar problemas de formato
-                    df['CELULAR 1'] = df['CELULAR 1'].astype(
-                        str).str.replace(r'\.0$', '', regex=True)
-                    df['CELULAR 2'] = df['CELULAR 2'].astype(
-                        str).str.replace(r'\.0$', '', regex=True)
-
-                    # Validación de columnas
-                    columnas_requeridas = [
-                        'APTO', 'NOMBRE Y APELLIDO', 'DOCUMENTO', 'PARENTESCO', 'CELULAR 1', 'CELULAR 2', 'OBSERVACION'
-                    ]
-                    if not all(col in df.columns for col in columnas_requeridas):
-                        messages.error(
-                            request, 'El archivo Excel no contiene las columnas requeridas.')
-                        return redirect('directorio_edificio', edificio_id=edificio.id)
-
-                    # Guardar cada fila en la base de datos
-                    for _, row in df.iterrows():
-                        Directorio.objects.update_or_create(
-                            edificio=edificio,
-                            nombre_apellido=row['NOMBRE Y APELLIDO'],
-                            defaults={
-                                'apto': row['APTO'],
-                                'documento': str(row['DOCUMENTO']),
-                                'parentesco': row['PARENTESCO'],
-                                'celular1': str(row['CELULAR 1']),
-                                'celular2': str(row['CELULAR 2']),
-                                'observacion': row['OBSERVACION'],
-                            }
-                        )
-                    messages.success(
-                        request, 'Directorio cargado desde Excel correctamente.')
-                except Exception as e:
-                    messages.error(
-                        request, f'Error al procesar el archivo: {str(e)}')
-                return redirect('directorio_edificio', edificio_id=edificio.id)
-
-        else:
-            form = DirectorioForm(request.POST)
-            if form.is_valid():
-                nuevo_residente = form.save(commit=False)
-                nuevo_residente.edificio = edificio
-                nuevo_residente.save()
-                messages.success(request, 'Residente agregado correctamente.')
-            return redirect('directorio_edificio', edificio_id=edificio.id)
-
-    form = DirectorioForm()
     form_excel = CargaExcelForm()
 
-    context = {
+    if request.method == 'POST' and 'carga_excel' in request.POST:
+        form_excel = CargaExcelForm(request.POST, request.FILES)
+
+        if form_excel.is_valid():
+            archivo = request.FILES['archivo_excel']
+
+            try:
+                if not archivo.name.endswith(('.xls', '.xlsx')):
+                    messages.error(
+                        request, 'Formato no soportado. Cargue un archivo Excel.')
+                    return redirect('directorio_edificio', edificio_id=edificio.id)
+
+                df = pd.read_excel(BytesIO(archivo.read())).fillna('')
+
+                columnas_requeridas = [
+                    'TORRE/BLOQUE', 'OFICINA', 'NOMBRE OFICINA', 'APTO',
+                    'NOMBRE', 'CÉDULA', 'TELÉFONO 1', 'TELÉFONO 2',
+                    'INFORMACIÓN ADICIONAL', 'CORREO PROPIETARIO',
+                    'NÚMERO PARQUEADERO', 'TIPO VEHÍCULO', 'MARCA',
+                    'COLOR', 'PLACA (6 CARACTERES)', 'OBSERVACIONES'
+                ]
+
+                columnas_faltantes = [
+                    col for col in columnas_requeridas if col not in df.columns
+                ]
+
+                if columnas_faltantes:
+                    messages.error(
+                        request,
+                        f'Faltan columnas: {", ".join(columnas_faltantes)}'
+                    )
+                    return redirect('directorio_edificio', edificio_id=edificio.id)
+
+                for col in columnas_requeridas:
+                    df[col] = (
+                        df[col]
+                        .astype(str)
+                        .str.replace(r'\.0$', '', regex=True)
+                        .str.strip().str.upper()
+                    )
+
+                creados = 0
+                actualizados = 0
+
+                for _, row in df.iterrows():
+                    nombre = row['NOMBRE']
+                    cedula = row['CÉDULA']
+                    apto = row['APTO']
+
+                    if not nombre and not cedula and not apto:
+                        continue
+
+                    obj, creado = Directorio.objects.update_or_create(
+                        edificio=edificio,
+                        cedula=cedula,
+                        defaults={
+                            'torre_bloque': row['TORRE/BLOQUE'],
+                            'oficina': row['OFICINA'],
+                            'nombre_oficina': row['NOMBRE OFICINA'],
+                            'apto': row['APTO'],
+                            'nombre': row['NOMBRE'],
+                            'telefono': row['TELÉFONO 1'],
+                            'telefono2': row['TELÉFONO 2'],
+                            'informacion_adicional': row['INFORMACIÓN ADICIONAL'],
+                            'correo_propietario': row['CORREO PROPIETARIO'],
+                            'numero_parqueadero': row['NÚMERO PARQUEADERO'],
+                            'tipo_vehiculo': row['TIPO VEHÍCULO'],
+                            'marca': row['MARCA'],
+                            'color': row['COLOR'],
+                            'placa': row['PLACA (6 CARACTERES)'],
+                            'observaciones': row['OBSERVACIONES'],
+                        }
+                    )
+
+                    if creado:
+                        creados += 1
+                    else:
+                        actualizados += 1
+
+                messages.success(
+                    request,
+                    f'Importación completada. Creados: {creados}. Actualizados: {actualizados}.'
+                )
+
+                return redirect('directorio_edificio', edificio_id=edificio.id)
+
+            except Exception as e:
+                messages.error(
+                    request, f'Error al procesar el archivo: {str(e)}')
+                return redirect('directorio_edificio', edificio_id=edificio.id)
+
+    return render(request, 'directorio.html', {
         'edificio': edificio,
         'directorio': directorio,
-        'form': form,
         'form_excel': form_excel,
         'filtro': filtro,
-    }
-    return render(request, 'directorio.html', context)
+    })
 
 
 @login_required
@@ -160,16 +193,21 @@ def filtrar_residentes(request, edificio_id):
 @login_required
 def editar_residente(request, edificio_id, residente_id):
     edificio = get_object_or_404(Edificio, id=edificio_id)
-    residente = get_object_or_404(Directorio, id=residente_id)
+    residente = get_object_or_404(
+        Directorio, id=residente_id, edificio=edificio)
 
     if request.method == 'POST':
-        form = DirectorioForm(request.POST, instance=residente)
+        form = DirectorioForm(
+            request.POST, instance=residente, edificio=edificio)
         if form.is_valid():
-            form.save()
+            residente_editado = form.save(commit=False)
+            residente_editado.actualizado_por = request.user
+            residente_editado.save()
+
             messages.success(request, 'Residente actualizado correctamente.')
             return redirect('directorio_edificio', edificio_id=edificio.id)
     else:
-        form = DirectorioForm(instance=residente)
+        form = DirectorioForm(instance=residente, edificio=edificio)
 
     context = {
         'edificio': edificio,
@@ -184,15 +222,17 @@ def agregar_residente(request, edificio_id):
     edificio = get_object_or_404(Edificio, id=edificio_id)
 
     if request.method == 'POST':
-        form = DirectorioForm(request.POST)
+        form = DirectorioForm(request.POST, edificio=edificio)
         if form.is_valid():
             nuevo_residente = form.save(commit=False)
             nuevo_residente.edificio = edificio
+            nuevo_residente.creado_por = request.user
+            nuevo_residente.actualizado_por = request.user
             nuevo_residente.save()
             messages.success(request, 'Residente agregado correctamente.')
             return redirect('directorio_edificio', edificio_id=edificio.id)
     else:
-        form = DirectorioForm()
+        form = DirectorioForm(edificio=edificio)
 
     context = {
         'edificio': edificio,
@@ -202,6 +242,7 @@ def agregar_residente(request, edificio_id):
 
 
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def eliminar_residente(request, edificio_id, residente_id):
     edificio = get_object_or_404(Edificio, id=edificio_id)
     try:
@@ -304,3 +345,48 @@ def colgar_llamada(request, edificio_id):
         return JsonResponse({'status': 'success', 'message': "Llamada finalizada."})
     else:
         return JsonResponse({'status': 'error', 'message': "Error al colgar la llamada."})
+
+# vista para exportar a Excel
+
+
+@login_required
+def exportar_directorio_excel(request, edificio_id):
+    edificio = get_object_or_404(Edificio, id=edificio_id)
+    registros = Directorio.objects.filter(edificio=edificio)
+
+    data = []
+
+    for r in registros:
+        data.append({
+            'TORRE/BLOQUE': r.torre_bloque or '',
+            'OFICINA': r.oficina or '',
+            'NOMBRE OFICINA': r.nombre_oficina or '',
+            'APTO': r.apto or '',
+            'NOMBRE': r.nombre or '',
+            'CÉDULA': r.cedula or '',
+            'TELÉFONO 1': r.telefono or '',
+            'TELÉFONO 2': r.telefono2 or '',
+            'INFORMACIÓN ADICIONAL': r.informacion_adicional or '',
+            'CORREO PROPIETARIO': r.correo_propietario or '',
+            'NÚMERO PARQUEADERO': r.numero_parqueadero or '',
+            'TIPO VEHÍCULO': r.tipo_vehiculo or '',
+            'MARCA': r.marca or '',
+            'COLOR': r.color or '',
+            'PLACA (6 CARACTERES)': r.placa or '',
+            'OBSERVACIONES': r.observaciones or '',
+        })
+
+    df = pd.DataFrame(data)
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+    nombre_archivo = f"backup_directorio_{edificio.nombre}.xlsx".replace(
+        " ", "_")
+
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+
+    df.to_excel(response, index=False)
+
+    return response

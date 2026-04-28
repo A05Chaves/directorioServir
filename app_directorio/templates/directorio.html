@@ -4,154 +4,210 @@
 {% block title %}Directorio - {{ edificio.nombre }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <h2>Directorio del Edificio: {{ edificio.nombre }}</h2>
+<div class="container-fluid mt-3 px-2">
 
-    {% if messages %}
-    <div class="mt-3">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
+    <div class="contenido-directorio">
 
-    <form method="POST" enctype="multipart/form-data" class="d-flex align-items-center p-2 border rounded shadow-sm bg-light mb-4">
-        {% csrf_token %}
-        <div class="me-2">
-            {{ form_excel.as_p }}
+
+        <h2>Directorio del Edificio: {{ edificio.nombre }}</h2>
+
+        {% if messages %}
+        <div class="mt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="d-flex align-items-center p-2 border rounded shadow-sm bg-light mb-4">
+            {% csrf_token %}
+            <div class="me-2">
+                {{ form_excel.as_p }}
+            </div>
+
+            <button type="submit" name="carga_excel" class="btn btn-primary btn-sm me-2">
+                <i class="fas fa-upload me-1"></i> Importar Excel
+            </button>
+
+            <a href="{% static 'plantillas/Plantilla_edificio.xlsx' %}" download class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-file-excel me-1"></i> Descargar Plantilla
+            </a>
+
+            <a href="{% url 'exportar_directorio_excel' edificio.id %}" class="btn btn-success btn-sm">
+                <i class="fas fa-file-excel me-1"></i> Exportar
+            </a>
+
+        </form>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="input-group" style="width: 75%;">
+                <span class="input-group-text bg-info text-white">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="filtro" placeholder="Buscar en el directorio" class="form-control">
+            </div>
+
+            <a href="{% url 'agregar_residente' edificio.id %}" class="btn btn-success ms-2">
+                <i class="fas fa-plus"></i> Agregar Registro
+            </a>
         </div>
 
-        <button type="submit" name="carga_excel" class="btn btn-primary btn-sm me-2">
-            <i class="fas fa-upload me-1"></i> Importar Excel
-        </button>
+        <style>
+            .tabla-container {
+                width: 100%;
+                overflow-x: auto;
+                margin: 0;
+                padding: 0;
+            }
 
-        <a href="{% static 'plantillas/Plantilla_edificio.xlsx' %}" download class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-file-excel me-1"></i> Descargar Plantilla
-        </a>
-    </form>
+            #tabla-residentes {
+                width: 100%;
+                min-width: 2200px;
+                border-collapse: collapse;
+                font-size: 12px;
+            }
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="input-group w-75 shadow-sm">
-            <span class="input-group-text bg-info text-white">
-                <i class="fas fa-search"></i>
-            </span>
-            <input type="text" id="filtro" placeholder="Buscar en el directorio" class="form-control">
+            #tabla-residentes th {
+                background-color: #212529;
+                color: white;
+                text-align: center;
+                white-space: nowrap;
+                padding: 8px;
+                font-size: 11px;
+            }
+
+            #tabla-residentes td {
+                white-space: nowrap;
+                padding: 6px;
+                vertical-align: middle;
+            }
+
+            .btn-group form {
+                display: inline;
+            }
+        </style>
+
+        <div class="tabla-container">
+            <table class="table table-bordered table-striped table-sm" id="tabla-residentes">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Torre/Bloque</th>
+                        <th>Oficina</th>
+                        <th>Nombre Oficina</th>
+                        <th>Apto</th>
+                        <th>Nombre</th>
+                        <th>Cédula</th>
+                        <th>Teléfono 1</th>
+                        <th>Teléfono 2</th>
+                        <th>Info Adicional</th>
+                        <th>Correo</th>
+                        <th>Parqueadero</th>
+                        <th>Vehículo</th>
+                        <th>Marca</th>
+                        <th>Color</th>
+                        <th>Placa</th>
+                        <th>Observaciones</th>
+                        
+                        <th>Acciones</th>
+                        
+                        {% if request.user.is_superuser %}
+                        <th>Creado por</th>
+                        <th>Actualizado por</th>
+                        <th>Fecha creación</th>
+                        <th>Última actualización</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+
+                <tbody id="tabla-cuerpo">
+                    {% for residente in directorio %}
+                    <tr>
+                        <td>{{ residente.torre_bloque|default:"--" }}</td>
+                        <td>{{ residente.oficina|default:"--" }}</td>
+                        <td>{{ residente.nombre_oficina|default:"--" }}</td>
+                        <td>{{ residente.apto|default:"--" }}</td>
+                        <td>{{ residente.nombre|default:"--" }}</td>
+                        <td>{{ residente.cedula|default:"--" }}</td>
+
+                        <td>
+                            {{ residente.telefono|default:"--" }}
+                            {% if residente.telefono %}
+                            <button class="btn btn-outline-primary btn-sm rounded-pill ms-1"
+                                onclick="llamar('{{ residente.telefono }}')">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ residente.telefono2|default:"--" }}
+                            {% if residente.telefono2 %}
+                            <button class="btn btn-outline-primary btn-sm rounded-pill ms-1"
+                                onclick="llamar('{{ residente.telefono2 }}')" title="Llamar">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ residente.informacion_adicional|default:"--" }}</td>
+                        <td>{{ residente.correo_propietario|default:"--" }}</td>
+                        <td>{{ residente.numero_parqueadero|default:"--" }}</td>
+                        <td>{{ residente.tipo_vehiculo|default:"--" }}</td>
+                        <td>{{ residente.marca|default:"--" }}</td>
+                        <td>{{ residente.color|default:"--" }}</td>
+                        <td>{{ residente.placa|default:"--" }}</td>
+                        <td>{{ residente.observaciones|default:"--" }}</td>
+
+                        <!-- Acciones: todos pueden editar -->
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+
+                                <!-- Editar visible para todos -->
+                                <a href="{% url 'editar_residente' edificio.id residente.id %}"
+                                    class="btn btn-outline-success btn-sm rounded-pill px-3 me-1"
+                                    title="Editar">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+
+                                <!-- Eliminar solo superusuario -->
+                                {% if request.user.is_superuser %}
+                                <form method="POST" action="{% url 'eliminar_residente' edificio.id residente.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="btn btn-outline-danger btn-sm rounded-pill px-3"
+                                        onclick="return confirm('¿Estás seguro de eliminar este registro?');"
+                                        title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                            </div>
+                        </td>
+
+                        <!-- Auditoría solo superusuario -->
+                        {% if request.user.is_superuser %}
+                        <td>{{ residente.creado_por|default:"--" }}</td>
+                        <td>{{ residente.actualizado_por|default:"--" }}</td>
+                        <td>{{ residente.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        <td>{{ residente.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
+                        {% endif %}
+
+                       
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if request.user.is_superuser %}21{% else %}16{% endif %}" class="text-center">
+                            No hay registros en este directorio.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            
+            </table>
         </div>
-
-        <a href="{% url 'agregar_residente' edificio.id %}" class="btn btn-success btn-sm ms-2">
-            <i class="fas fa-plus"></i> Agregar Registro
-        </a>
     </div>
-
-
-    <style>
-        th {
-            font-size: 12px;
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-
-        td {
-            font-size: 13px;
-            vertical-align: middle;
-        }
-    </style>
-
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped table-sm align-middle" id="tabla-residentes">
-            <thead class="table-dark text-center">
-                <tr>
-                    <th>Torre/Bloque</th>
-                    <th>Oficina</th>
-                    <th>Nombre Oficina</th>
-                    <th>Apto</th>
-                    <th>Nombre</th>
-                    <th>Cédula</th>
-                    <th>Teléfono 1</th>
-                    <th>Teléfono 2</th>
-                    <th>Info Adicional</th>
-                    <th>Correo</th>
-                    <th>Parqueadero</th>
-                    <th>Vehículo</th>
-                    <th>Marca</th>
-                    <th>Color</th>
-                    <th>Placa</th>
-                    <th>Observaciones</th>
-                    {% if request.user.is_superuser %}
-                    <th>Acciones</th>
-                    {% endif %}
-                </tr>
-            </thead>
-
-            <tbody id="tabla-cuerpo">
-                {% for residente in directorio %}
-                <tr>
-                    <td>{{ residente.torre_bloque|default:"--" }}</td>
-                    <td>{{ residente.oficina|default:"--" }}</td>
-                    <td>{{ residente.nombre_oficina|default:"--" }}</td>
-                    <td>{{ residente.apto|default:"--" }}</td>
-                    <td>{{ residente.nombre|default:"--" }}</td>
-                    <td>{{ residente.cedula|default:"--" }}</td>
-
-                    <td>
-                        {{ residente.telefono|default:"--" }}
-                        {% if residente.telefono %}
-                        <button class="btn btn-outline-primary btn-sm rounded-pill ms-1"
-                            onclick="llamar('{{ residente.telefono }}')">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        {% endif %}
-                    </td>
-
-                    <td>
-                        {{ residente.telefono2|default:"--" }}
-                        {% if residente.telefono2 %}
-                        <button class="btn btn-outline-primary btn-sm rounded-pill ms-1"
-                            onclick="llamar('{{ residente.telefono2 }}')" title="Llamar">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        {% endif %}
-                    </td>
-
-                    <td>{{ residente.informacion_adicional|default:"--" }}</td>
-                    <td>{{ residente.correo_propietario|default:"--" }}</td>
-                    <td>{{ residente.numero_parqueadero|default:"--" }}</td>
-                    <td>{{ residente.tipo_vehiculo|default:"--" }}</td>
-                    <td>{{ residente.marca|default:"--" }}</td>
-                    <td>{{ residente.color|default:"--" }}</td>
-                    <td>{{ residente.placa|default:"--" }}</td>
-                    <td>{{ residente.observaciones|default:"--" }}</td>
-
-                    {% if request.user.is_superuser %}
-                    <td class="text-center">
-                        <div class="btn-group" role="group">
-                            <a href="{% url 'editar_residente' edificio.id residente.id %}"
-                                class="btn btn-outline-success btn-sm rounded-pill px-3 me-1" title="Editar">
-                                <i class="fas fa-pen"></i>
-                            </a>
-
-                            <form method="POST" action="{% url 'eliminar_residente' edificio.id residente.id %}">
-                                {% csrf_token %}
-                                <button type="submit"
-                                    class="btn btn-outline-danger btn-sm rounded-pill px-3"
-                                    onclick="return confirm('¿Estás seguro de eliminar este registro?');"
-                                    title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                    {% endif %}
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="16" class="text-center">No hay registros en este directorio.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
     <script>
         function llamar(numero) {
             fetch(`/llamar/{{ edificio.id }}/${numero}/`)

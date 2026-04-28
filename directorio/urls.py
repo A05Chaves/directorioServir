@@ -39,4 +39,9 @@ urlpatterns = [
     path('llamar/<int:edificio_id>/<str:telefono>/',
          views.realizar_llamada, name='realizar_llamada'),
     path('colgar/<int:edificio_id>/', views.colgar_llamada, name='colgar_llamada'),
+    path(
+        'directorio/<int:edificio_id>/exportar/',
+        views.exportar_directorio_excel,
+        name='exportar_directorio_excel'
+    ),
 ]
